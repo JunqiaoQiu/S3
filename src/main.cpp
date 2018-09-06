@@ -1,6 +1,12 @@
 
 #include <thread>
 #include "cxxopts.hpp"
+#include "Resources.hpp"
+#include "s3framework.hpp"
+
+using namespace std;
+using namespace microspec;
+using namespace s3;
 
 struct arguments 
 {
