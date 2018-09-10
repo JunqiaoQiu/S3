@@ -1,5 +1,6 @@
 # Scalability-Sensitive Speculation framework for FSM parallelization
 
-Publications:
-Qiu, J., Zhao, Z., Wu, B., Vishnu, A. and Song, S.L., 2017, June. Enabling scalability-sensitive speculative parallelization for FSM computations. In Proceedings of the International Conference on Supercomputing (p. 2). ACM.
+**S3** is a scalability-sensitive speculation framework for FSM parallelization.
+For any given FSM, **S3** can automatically characterize its properties and analyze its scalability, hence guide speculative paralleilization towards the optimal performance more efficient use of computing resources. More details can be found in our paper.
+
 

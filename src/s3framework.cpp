@@ -19,13 +19,13 @@ using namespace microspec;
 
 namespace s3
 {
-	
-	const long TrainLength = 20000000;
-
 	class TrainDFA:public DFA
 	{
 	public:
-		TrainDFA() {}
+		TrainDFA():DFA() 
+		{
+			mReExecuteAction = doNothingReExecute;
+		}
 		virtual ~TrainDFA() {}
 
 		virtual void run(const Table* table, const Input* input)
@@ -38,18 +38,18 @@ namespace s3
 			int length_ = input->getLength();
 
 			int state_ = rand() % nstate_;
-			long determinetrainlength = (TrainLength > length_)? length_ : TrainLength;
-			long randstartpoint_ = rand() % (length_ - determinetrainlength + 1);
+			long determineTrainLength = (TrainLength > length_)? length_ : TrainLength;
+			long randstartpoint_ = rand() % (length_ - determineTrainLength + 1);
 
-			for (long i = randstartpoint_; i < randstartpoint_ + determinetrainlength; i++)
+			for (long i = randstartpoint_; i < randstartpoint_ + determineTrainLength; i++)
 			{
 				int temp = tableList_[state_ * nsymbol_ + Inputs_[i]];
 				state_ = temp & 0X0FFFFFFF;
 
 				// Action Function (state_)
-				//  table->getAction()(...., state_);
+				mAction(temp, mEndingResults);
 			}
-			printf("The final state is  %d\n", state_);			
+			//printf("The final state is  %d\n", state_);			
 		}
 
 		void doubleRun(const Table* table, const Input* input)
@@ -64,10 +64,10 @@ namespace s3
 			int state1_ = rand() % nstate_;
 			int state2_ = rand() % nstate_;
 
-			long determinetrainlength = (TrainLength > length_)? length_ : TrainLength;
-			long randstartpoint_ = rand() % (length_ - determinetrainlength + 1);
+			long determineTrainLength = (TrainLength > length_)? length_ : TrainLength;
+			long randStartPoint = rand() % (length_ - determineTrainLength + 1);
 
-			for (long i = randstartpoint_; i < randstartpoint_ + determinetrainlength; i++)
+			for (long i = randStartPoint; i < randStartPoint + determineTrainLength; i++)
 			{
 				int temp1 = tableList_[state1_ * nsymbol_ + Inputs_[i]];
 				int temp2 = tableList_[state2_ * nsymbol_ + Inputs_[i]];
@@ -78,62 +78,71 @@ namespace s3
 					state2_ = 0;
 
 				// Action Function (state_)
-				//  table->getAction()(...., state_);
+				mReExecuteAction(temp1, temp2, mEndingResults);
 			}
-			printf("The final state is  %d and %d \n", state1_, state2_);				
+			//printf("The final state is  %d and %d \n", state1_, state2_);				
 		}
+
+	private:
+		actionReExecute mReExecuteAction;
 	};
 
-	struct  PassItemOBJ
+	struct  PassTrainDFA
 	{
-		TrainDFA* mobj_;
-		const Table* mtable_;
-		const Input* minput_;
+		TrainDFA* mObjDFA;
+		const Table* mTablePointer;
+		const Input* mInputPointer;
 	};
 
 	ArchitecturePropertyCollector::ArchitecturePropertyCollector()
 	{
-		mthreads = 1;
-		mtraintime = 0;
-		malpha = new double [1];
-		malpha[0] = 1.00;
-		mgama = 1.00;
+		mThreads = 1;
+		mTrainTime = 0;
+		mAlpha = new double [1];
+		mAlpha[0] = 1.00;
+		mGama = 1.00;
+		mAverageBaseTime = 0.00;
 	}
 
-	ArchitecturePropertyCollector::ArchitecturePropertyCollector(int threads_)
+	ArchitecturePropertyCollector::ArchitecturePropertyCollector(int threads)
 	{
-		mthreads = threads_;
-		mtraintime = 0;
-		malpha = new double [threads_];
-		mgama = 1.00;
-		for (int i =0 ; i < threads_; i++)
-			malpha[i] = 1.00;
-
+		mThreads = threads;
+		mTrainTime = 0;
+		mAlpha = new double [threads];
+		mGama = 1.00;
+		for (int i =0 ; i < threads; i++)
+			mAlpha[i] = 1.00;
+		mAverageBaseTime = 0.00;
 	}
 
 	ArchitecturePropertyCollector::~ArchitecturePropertyCollector()
 	{
-		delete []malpha;
+		delete []mAlpha;
 	}
 
-	void ArchitecturePropertyCollector::ExecuteTrain(const Table* table_, const Input* inputs_)
+	void ArchitecturePropertyCollector::executeTrain(const Table* table_, const Input* inputs_)
 	{
-		TrainDFA* obj_train = new TrainDFA();
+		TrainDFA* objTrain = new TrainDFA();
 
 		Timer T1;
 		srand(time(NULL));
 		startTime(&T1);
-		obj_train->Run(table_, inputs_);		
+		objTrain->run(table_, inputs_);		
 		stopTime(&T1);
-		double basetime_ =  elapsedTime(T1);
+		double baseTime =  elapsedTime(T1);
+		if (mTrainTime == 0)
+			mAverageBaseTime = baseTime;
+		else
+			mAverageBaseTime = (mAverageBaseTime * mTrainTime + baseTime) / (mTrainTime+1.0) ;
 
+		cout << "Base time is " << baseTime << endl;
 		//PTHREAD--------------------------------
-		int errorCheck1, errorCheck2;
+		int errorCode1, errorCode2;
 		long t;
 		pthread_t* threads;			
-		threads=(pthread_t*)malloc(sizeof(pthread_t) * mthreads);
+		threads=(pthread_t*)malloc(sizeof(pthread_t) * mThreads);
 		cpu_set_t* cpu;		// thread binding variables
-		int MAXCPU = (mthreads > get_nprocs() ? get_nprocs():mthreads);
+		int MAXCPU = (mThreads > get_nprocs() ? get_nprocs():mThreads);
 		cpu=(cpu_set_t*)malloc(sizeof(cpu_set_t) * MAXCPU);
 		//PTHREAD-------------------------------	
 
@@ -144,83 +153,88 @@ namespace s3
 			CPU_SET(t, &cpu[t]);
 		}		
 
-		PassItemOBJ* obj_train_pointer = new PassItemOBJ;
-		obj_train_pointer->mobj_ = obj_train;
-		obj_train_pointer->mtable_ = table_;
-		obj_train_pointer->minput_ = inputs_;
+		PassTrainDFA* objTrainPointer = new PassTrainDFA;
+		objTrainPointer->mObjDFA = objTrain;
+		objTrainPointer->mTablePointer = table_;
+		objTrainPointer->mInputPointer = inputs_;
 
-		for (int i = 2; i <= mthreads; i++)
+		for (int i = 2; i <= mThreads; i++)
 		{
 			startTime(&T1);	
 			for(t = 0; t < i; t++)
 			{
-				errorCheck1 = pthread_create(&threads[t], NULL, caller, (void*)obj_train_pointer);
-				if (errorCheck1)
+				errorCode1 = pthread_create(&threads[t], NULL, callDFA_run, (void*)objTrainPointer);
+				if (errorCode1)
 				{
-					printf("ERROR; return code from pthread_create() is %d\n", errorCheck1);
+					printf("ERROR; return code from pthread_create() is %d\n", errorCode1);
 					exit(-1);
 				}
-				errorCheck2 = pthread_setaffinity_np(threads[t], sizeof(cpu_set_t), &cpu[t%MAXCPU]);
+				errorCode2 = pthread_setaffinity_np(threads[t], sizeof(cpu_set_t), &cpu[t%MAXCPU]);
 			}
 			for(t = 0; t< i; t++)
 		    	pthread_join(threads[t], NULL);	
-
 		    stopTime(&T1);
-		    double multime = elapsedTime(T1);
-		    cout << i << " " << multime << endl;
-		    if (mtraintime == 0)
-				malpha[i-1] = multime / basetime_;
+		    double mulTime = elapsedTime(T1);
+
+		    cout << i << " " << mulTime << endl;
+		    if (mTrainTime == 0)
+				mAlpha[i-1] = mulTime / baseTime;
 		    else
-				malpha[i-1] = (multime + basetime_ * malpha[i-1])  / (mtraintime+1.0);		
+				mAlpha[i-1] =  ( (mulTime + (mAverageBaseTime*(mTrainTime+1.0) - baseTime)*mAlpha[i-1] ) / (mTrainTime+1.0) ) / mAverageBaseTime;		
 		}
 
 		startTime(&T1);	
-		obj_train->DoubleRun(table_, inputs_);
+		objTrainPointer->mObjDFA->doubleRun(table_, inputs_);
 		stopTime(&T1);
-		double doubletime = elapsedTime(T1);
-		cout << doubletime << " " << basetime_ << endl;
+		double doubleTime = elapsedTime(T1);
+		cout << doubleTime << " " << baseTime << endl;
 
-		if (mtraintime == 0)
-			mgama = doubletime / basetime_;
+		if (mTrainTime == 0)
+			mGama = doubleTime / baseTime;
 		else
-			mgama = (doubletime + basetime_ * mgama)  / (mtraintime+1.0);	
+			mGama = ( (doubleTime + (mAverageBaseTime*(mTrainTime+1.0) - baseTime)*mGama) / (mTrainTime+1.0) ) / mAverageBaseTime;	
 
-		mtraintime++;
+		mTrainTime++;
 	}
 
-	void* ArchitecturePropertyCollector::caller(void* args)
+	void* ArchitecturePropertyCollector::callDFA_run(void* args)
 	{
-		PassItemOBJ* Arg = (PassItemOBJ*)args;
-		(Arg->mobj_)->Run(Arg->mtable_, Arg->minput_);
+		PassTrainDFA* Arg = (PassTrainDFA*)args;
+		(Arg->mObjDFA)->run(Arg->mTablePointer, Arg->mInputPointer);
 		pthread_exit((void*)args);
 	}
 
-	int ArchitecturePropertyCollector::GetTrainTimes() const
+	int ArchitecturePropertyCollector::getTrainTimes() const
 	{
-		return mtraintime;
+		return mTrainTime;
 	}
 
-	int ArchitecturePropertyCollector::GetNumThreads() const
+	int ArchitecturePropertyCollector::getNumThreads() const
 	{
-		return mthreads;
+		return mThreads;
 	}
 
-	double* ArchitecturePropertyCollector::GetAlphaPointer()
+	double* ArchitecturePropertyCollector::getAlphaPointer()
 	{
-		return malpha;
+		return mAlpha;
 	}
 
-	double ArchitecturePropertyCollector::GetAlpha(int threads_) const
+	double ArchitecturePropertyCollector::getAlpha(int threadsIndex) const
 	{
-		if (threads_ <= mthreads && threads_ > 0)
-			return malpha[threads_-1];
+		if (threadsIndex <= mThreads && threadsIndex > 0)
+			return mAlpha[threadsIndex-1];
 		else
 			return 1.00;
 	}
 		
-	double ArchitecturePropertyCollector::GetGama() const
+	double ArchitecturePropertyCollector::getGama() const
 	{
-		return mgama;
+		return mGama;
+	}
+
+	double ArchitecturePropertyCollector::getAverageSeqTime() const
+	{
+		return mAverageBaseTime;
 	}
 
 }	// end of namespace s3
