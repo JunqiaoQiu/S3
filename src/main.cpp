@@ -1,8 +1,8 @@
 
 #include <thread>
 #include "cxxopts.hpp"
-#include "Resources.hpp"
-#include "s3framework.hpp"
+#include "Resources.h"
+#include "s3framework.h"
 
 using namespace std;
 using namespace microspec;

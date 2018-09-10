@@ -7,11 +7,11 @@
 #include <pthread.h>
 #include <sys/sysinfo.h>
 
-#include "s3framework.hpp"
-#include "Resources.hpp"
-#include "Predictor.hpp"
-#include "MicroSpec.hpp"
-#include "Timer.hpp"
+#include "s3framework.h"
+#include "Resources.h"
+#include "Predictor.h"
+#include "MicroSpec.h"
+#include "Timer.h"
 
 using namespace std;
 using namespace microspec;
@@ -21,11 +21,11 @@ namespace s3
 	
 	const long TrainLength = 20000000;
 
-	class Train_DFA:public DFA
+	class TrainDFA:public DFA
 	{
 	public:
-		Train_DFA() {}
-		virtual ~Train_DFA() {}
+		TrainDFA() {}
+		virtual ~TrainDFA() {}
 
 		virtual void Run(const Table* table, const Input* input)
 		{
@@ -85,12 +85,12 @@ namespace s3
 
 	struct  PassItemOBJ
 	{
-		Train_DFA* mobj_;
-		Table* mtable_;
-		Input* minput_;
+		TrainDFA* mobj_;
+		const Table* mtable_;
+		const Input* minput_;
 	};
 
-	ArchitectureEffect::ArchitectureEffect()
+	ArchitecturePropertyCollector::ArchitecturePropertyCollector()
 	{
 		mthreads = 1;
 		mtraintime = 0;
@@ -99,7 +99,7 @@ namespace s3
 		mgama = 1.00;
 	}
 
-	ArchitectureEffect::ArchitectureEffect(int threads_)
+	ArchitecturePropertyCollector::ArchitecturePropertyCollector(int threads_)
 	{
 		mthreads = threads_;
 		mtraintime = 0;
@@ -110,14 +110,14 @@ namespace s3
 
 	}
 
-	ArchitectureEffect::~ArchitectureEffect()
+	ArchitecturePropertyCollector::~ArchitecturePropertyCollector()
 	{
 		delete []malpha;
 	}
 
-	void ArchitectureEffect::ExecuteTrain(Table* table_, Input* inputs_)
+	void ArchitecturePropertyCollector::ExecuteTrain(const Table* table_, const Input* inputs_)
 	{
-		Train_DFA* obj_train = new Train_DFA();
+		TrainDFA* obj_train = new TrainDFA();
 
 		Timer T1;
 		srand(time(NULL));
@@ -130,7 +130,7 @@ namespace s3
 		int errorCheck1, errorCheck2;
 		long t;
 		pthread_t* threads;			
-		threads=(pthread_t*)malloc(sizeof(pthread_t)* mthreads);
+		threads=(pthread_t*)malloc(sizeof(pthread_t) * mthreads);
 		cpu_set_t* cpu;		// thread binding variables
 		int MAXCPU = (mthreads > get_nprocs() ? get_nprocs():mthreads);
 		cpu=(cpu_set_t*)malloc(sizeof(cpu_set_t) * MAXCPU);
@@ -187,29 +187,29 @@ namespace s3
 		mtraintime++;
 	}
 
-	void* ArchitectureEffect::caller(void* args)
+	void* ArchitecturePropertyCollector::caller(void* args)
 	{
 		PassItemOBJ* Arg = (PassItemOBJ*)args;
 		(Arg->mobj_)->Run(Arg->mtable_, Arg->minput_);
 		pthread_exit((void*)args);
 	}
 
-	int ArchitectureEffect::GetTrainTimes() const
+	int ArchitecturePropertyCollector::GetTrainTimes() const
 	{
 		return mtraintime;
 	}
 
-	int ArchitectureEffect::GetNumThreads() const
+	int ArchitecturePropertyCollector::GetNumThreads() const
 	{
 		return mthreads;
 	}
 
-	double* ArchitectureEffect::GetAlphaPointer()
+	double* ArchitecturePropertyCollector::GetAlphaPointer()
 	{
 		return malpha;
 	}
 
-	double ArchitectureEffect::GetAlpha(int threads_) const
+	double ArchitecturePropertyCollector::GetAlpha(int threads_) const
 	{
 		if (threads_ <= mthreads && threads_ > 0)
 			return malpha[threads_-1];
@@ -217,7 +217,7 @@ namespace s3
 			return 1.00;
 	}
 		
-	double ArchitectureEffect::GetGama() const
+	double ArchitecturePropertyCollector::GetGama() const
 	{
 		return mgama;
 	}

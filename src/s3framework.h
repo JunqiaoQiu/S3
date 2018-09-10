@@ -4,19 +4,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "Resources.hpp"
-#include "Predictor.hpp"
+#include "Resources.h"
+#include "Predictor.h"
 
 namespace s3
 {
-	class ArchitectureEffect
+	class ArchitecturePropertyCollector
 	{
 	public:
-		ArchitectureEffect();
-		ArchitectureEffect(int threads_);
-		~ArchitectureEffect();
+		ArchitecturePropertyCollector();
+		ArchitecturePropertyCollector(int threads_);
+		~ArchitecturePropertyCollector();
 
-		void ExecuteTrain(microspec::Table* table_, microspec::Input* inputs_);
+		void ExecuteTrain(const microspec::Table* table_, const microspec::Input* inputs_);
 		int GetTrainTimes() const;
 		int GetNumThreads() const;
 		double* GetAlphaPointer();
