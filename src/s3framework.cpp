@@ -10,6 +10,7 @@
 #include "s3framework.h"
 #include "Resources.h"
 #include "Predictor.h"
+#include "Action.h"
 #include "MicroSpec.h"
 #include "Timer.h"
 
@@ -27,7 +28,7 @@ namespace s3
 		TrainDFA() {}
 		virtual ~TrainDFA() {}
 
-		virtual void Run(const Table* table, const Input* input)
+		virtual void run(const Table* table, const Input* input)
 		{
 			int* tableList_ = table->getTable();
 			int nstate_ = table->getNumState();
@@ -51,7 +52,7 @@ namespace s3
 			printf("The final state is  %d\n", state_);			
 		}
 
-		void DoubleRun(const Table* table, const Input* input)
+		void doubleRun(const Table* table, const Input* input)
 		{
 			int* tableList_ = table->getTable();
 			int nstate_ = table->getNumState();
