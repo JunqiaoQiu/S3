@@ -19,6 +19,9 @@ using namespace microspec;
 
 namespace s3
 {
+
+/* Implementation of class TrainDFA */
+
 	class TrainDFA:public DFA
 	{
 	public:
@@ -92,7 +95,10 @@ namespace s3
 		TrainDFA* mObjDFA;
 		const Table* mTablePointer;
 		const Input* mInputPointer;
+
 	};
+
+/* Implementation of class ArchitecturePropertyCollector */
 
 	ArchitecturePropertyCollector::ArchitecturePropertyCollector()
 	{
@@ -236,5 +242,31 @@ namespace s3
 	{
 		return mAverageBaseTime;
 	}
+
+/* Implementation of class DFAPropertyCollector */	
+	DFAPropertyCollector::DFAPropertyCollector()
+	{
+		mSamples = 0;
+		mConvergenceLength = 0;
+		mConvergenceLengthPool = new long [DFAProfileSample];
+	}
+
+	void DFAPropertyCollector::executeProfiling(const microspec::Table* table, const microspec::Input* inputs)
+	{
+		srand(time(NULL));
+
+	}
+
+	int DFAPropertyCollector::printCurrentSamples() const
+	{
+		return mSamples;
+	}
+
+	double DFAPropertyCollector::getAverageConvergenceLength() const
+	{
+		return mConvergenceLength;
+	}
+
+/* Implementation of class S3RunTimeController */	
 
 }	// end of namespace s3

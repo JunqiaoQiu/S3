@@ -6,12 +6,10 @@
 
 #include "Resources.h"
 #include "Predictor.h"
+#include "s3verifier.h"
 
 namespace s3
 {
-	const long TrainLength = 10000000;
-	const int DFAProfileSample = 120;
-
 	class ArchitecturePropertyCollector
 	{
 	public:
@@ -45,11 +43,16 @@ namespace s3
 	public:
 		DFAPropertyCollector();
 		~DFAPropertyCollector();
-		void printCurrentSamples();
+
+		void executeProfiling(const microspec::Table* table, const microspec::Input* inputs);
+
+		int printCurrentSamples() const;
+		double getAverageConvergenceLength() const;
 	private:
 		int mSamples;
-		long mConvergenceLength;
-	}
+		double mConvergenceLength;
+		long* mConvergenceLengthPool;
+	};
 
 	class S3RunTimeController
 	{
@@ -61,7 +64,7 @@ namespace s3
 		ArchitecturePropertyCollector* mOfflineArchiCollector;
 		DFAPropertyCollector* mOfflineDFACollector;
 		double 
-	}
+	};
 
 }	// end of namespace s3
 
