@@ -3,10 +3,7 @@
 # ignore build dir
 build/
 
-
 # ignore binaries
 *.out
 .vscode/
 
-# currently ignore repo MicroSpec
-MicroSpecRepo/

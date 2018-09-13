@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(S3)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -pthread") 
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -pthread -mavx2 -msse4") 
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 include_directories(src third-party)
@@ -15,7 +15,8 @@ file(GLOB SRC
 
 add_subdirectory(MicroSpecRepo)
 
-file(GLOB HEADER ${CMAKE_CURRENT_SOURCE_DIR}/src/s3framework.cpp)
+file(GLOB HEADER ${CMAKE_CURRENT_SOURCE_DIR}/src/s3framework.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/src/s3verifier.cpp)
 add_library(S3LIB ${HEADER})
 
 add_executable (${PROJECT_NAME} ${SRC})
