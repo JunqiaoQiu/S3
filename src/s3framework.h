@@ -17,9 +17,15 @@ namespace s3
 		ArchitecturePropertyCollector(int threads);
 		~ArchitecturePropertyCollector();
 
+		// @Brief Provide the @table and @inputs, or @inputsLibFIle, then measure the time
+		// spent when using different number of cores on the input chunks with same length
 		void executeTrain(const microspec::Table* table, const microspec::Input* inputs);
-		
+		void executeTrain(const microspec::Table* table, const char* inputsLibFile, 
+			const microspec::MappingRule* rule);
 
+		void repeatExecuteTrain(const microspec::Table* table, const microspec::Input* inputs, 
+			const int repeatTime);
+		
 		int getTrainTimes() const;
 		int getNumThreads() const;
 		double* getAlphaPointer();
@@ -48,27 +54,32 @@ namespace s3
 		DFAPropertyCollector(int samplePoolSize, int samplePerTest);
 		~DFAPropertyCollector();
 
-		// @Brief By reading the inputs from the paths shown on file @inputsLibFile, then 
-		// execute convergence length profiling for the given @table 
+		// @Brief By reading the inputs from the paths shown on file @inputsLibFile, 
+		// or directly from a Input* array, then execute convergence length 
+		// profiling for the given @table 
 		void executeProfilingOnTestLibs(const microspec::Table* table, 
 			const char* inputsLibFile, const microspec::MappingRule* rule);
 
+		void executeProfilingOnTestLibs(const microspec::Table* table, 
+			const microspec::Input** InputLibs, const int libSize);
+
 		// @Brief Execute the convergence length profiling on the 
 		// given @input for the given @table 
-		void executeProfiling(const microspec::Table* table, const microspec::Input* input);
+		void executeProfilingOnOneInput(const microspec::Table* table, const microspec::Input* input);
 
-		int getCurrentSamples() const;
-		int getSamplePoolSize() const;
-		int getSamplePerInput() const;
-		double getAverageConvergenceLength() const;
+		const int getCurrentSamples() const;
+		const int getSamplePoolSize() const;
+		const int getSamplePerInput() const;
+		double getPredictionAccuracy();
+		double getAverageConvergenceLength();
 		long* getConvergencePool() const;
-
 		void setSamplesPerInput(int sizeSet);
 
 	private:
 		int mSamples;
 		int mSamplePoolSize;
 		int mSamplesPerInput;
+		int mCorrectPrediction;
 		double mConvergenceLength;
 		long* mConvergenceLengthPool;
 	};
@@ -82,6 +93,9 @@ namespace s3
 
 		void startOffileArchiProfile();
 		void startOfflineDFAProfile();
+
+		// @Brief Provide the name of model, with the help of offline profiling, 
+		// the performance analysis will be completed. 
 		void startModelConstruction(char* modelType);
 
 		void setTestLength(long length);
