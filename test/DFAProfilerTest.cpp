@@ -39,16 +39,32 @@ int main(int argc, char* argv[])
 	//objCollector->executeProfilingOnOneInput(table_, inputs_);
 	objCollector->executeProfilingOnTestLibs(table_, InputFile, rules_);
 
-	cout << "Detail Pool " << endl;
+	cout << endl << "Detail Pool " << endl;
 	for (int i = 0; i < objCollector->getCurrentSamples(); i++)
 		cout << (objCollector->getConvergencePool())[i] << " ";
-	cout << endl;
+	cout << endl << endl;
+
+	cout << "Current Samples " << objCollector->getCurrentSamples() << endl;
+	cout << "Pool Size is " << objCollector->getSamplePoolSize() << endl;
+	cout << "Samples on One Input " << objCollector->getSamplePerInput() << endl;
+	cout << "Prediction Accuracy " << objCollector->getPredictionAccuracy() << endl;
+	cout << "Average CL " << objCollector->getAverageConvergenceLength() << endl << endl;
+
+
+	// Execute again to check whether it can work 
+	objCollector->executeProfilingOnTestLibs(table_, InputFile, rules_);
+
+	cout << endl << "Detail Pool " << endl;
+	for (int i = 0; i < objCollector->getCurrentSamples(); i++)
+		cout << (objCollector->getConvergencePool())[i] << " ";
+	cout << endl << endl;
 
 	cout << "Current Samples " << objCollector->getCurrentSamples() << endl;
 	cout << "Pool Size is " << objCollector->getSamplePoolSize() << endl;
 	cout << "Samples on One Input " << objCollector->getSamplePerInput() << endl;
 	cout << "Prediction Accuracy " << objCollector->getPredictionAccuracy() << endl;
 	cout << "Average CL " << objCollector->getAverageConvergenceLength() << endl;
+
 
 	return 0;
 }

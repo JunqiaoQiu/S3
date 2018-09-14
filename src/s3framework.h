@@ -15,7 +15,11 @@ namespace s3
 	public:
 		ArchitecturePropertyCollector();
 		ArchitecturePropertyCollector(int threads);
+		ArchitecturePropertyCollector(int threads, long trainingLength);
 		~ArchitecturePropertyCollector();
+
+		// TO DO: can provide function to directly read the alpha and gama from File
+		// static ArchitecturePropertyCollector* constructArchiFromFile(char* profileFile);
 
 		// @Brief Provide the @table and @inputs, or @inputsLibFIle, then measure the time
 		// spent when using different number of cores on the input chunks with same length
@@ -25,8 +29,11 @@ namespace s3
 
 		void repeatExecuteTrain(const microspec::Table* table, const microspec::Input* inputs, 
 			const int repeatTime);
+		void repeatExecuteTrain(const microspec::Table* table, const char* inputsLibFile, 
+			const microspec::MappingRule* rule, const int repeatTime);		
 		
 		int getTrainTimes() const;
+		long getTrainingLength() const;
 		int getNumThreads() const;
 		double* getAlphaPointer();
 		double getAlpha(int threadsIndex) const;
@@ -37,8 +44,12 @@ namespace s3
 		static void* callDFA_run(void* args);
 
 	private:
+		// Set up when initialize
 		int mThreads;
-		int mTrainTime;
+		long mTrainingLength;
+
+		// the number of training to get the current results
+		int mTrainTime;	
 		double mAverageBaseTime;
 
 		// resource contention factor
@@ -53,6 +64,9 @@ namespace s3
 		DFAPropertyCollector();
 		DFAPropertyCollector(int samplePoolSize, int samplePerTest);
 		~DFAPropertyCollector();
+
+		// TO DO: can provide function to directly read the sample pool from File
+		// const DFAPropertyCollector* constructPropertyFromFile(char* profileFile);
 
 		// @Brief By reading the inputs from the paths shown on file @inputsLibFile, 
 		// or directly from a Input* array, then execute convergence length 
@@ -69,11 +83,18 @@ namespace s3
 
 		const int getCurrentSamples() const;
 		const int getSamplePoolSize() const;
+
 		const int getSamplePerInput() const;
-		double getPredictionAccuracy();
-		double getAverageConvergenceLength();
-		long* getConvergencePool() const;
 		void setSamplesPerInput(int sizeSet);
+		
+		double getPredictionAccuracy();
+
+		// Brief function getAverageConvergenceLength() will return the average of the CL
+		// pool, while func getEffectiveAverageConvergenceLength() return the average of the 
+		// CL pool without considering the correct prediction samples. 
+		double getAverageConvergenceLength();
+		double getEffectiveAverageConvergenceLength();
+		long* getConvergencePool() const;
 
 	private:
 		int mSamples;
@@ -81,6 +102,7 @@ namespace s3
 		int mSamplesPerInput;
 		int mCorrectPrediction;
 		double mConvergenceLength;
+		double mEffectiveConvergenceLength;
 		long* mConvergenceLengthPool;
 	};
 
@@ -89,10 +111,21 @@ namespace s3
 	public:
 		S3RunTimeController();
 		S3RunTimeController(int threads);
+		S3RunTimeController(int threads, long testLength);
 		~S3RunTimeController();
 
-		void startOffileArchiProfile();
-		void startOfflineDFAProfile();
+		// @Brief start the offline profiling of arhictecture effects and dfa property.
+		void startOfflineProfile(const microspec::Table* table, 
+			const char* inputsLibFile, const microspec::MappingRule* rule);
+
+		// @Brief start the offline profiling of architecture effects. 
+		void startOfflineArchiProfile(const microspec::Table* table, 
+			const char* inputsLibFile, const microspec::MappingRule* rule);
+
+
+		// @Brief start the offline profiling of dfa property.
+		void startOfflineDFAProfile(const microspec::Table* table, 
+			const char* inputsLibFile, const microspec::MappingRule* rule);
 
 		// @Brief Provide the name of model, with the help of offline profiling, 
 		// the performance analysis will be completed. 
@@ -100,11 +133,13 @@ namespace s3
 
 		void setTestLength(long length);
 		const long getTestLength() const;
+
 		const int getOptConfiguration() const;
 		const double getOptPerformance() const;
 		double* getSpeedupArrays() const; 
 
 	protected:
+		void clearPreviousResults();
 
 		// @Brief In Model M1 and M2, the arhictecture effects are not considered;
 		// while those effects are considered in the plus version; And M1 model checks 
@@ -115,15 +150,17 @@ namespace s3
 		void ModelM2Plus();
 
 	private:
+		// Basic Information 
 		int mThreads;
 		bool mArchiProfileComplete;
 		bool mPropertyProfileComplete;
-
 		long mTestLength;
 
+		// Necessary Components
 		ArchitecturePropertyCollector* mOfflineArchiCollector;
 		DFAPropertyCollector* mOfflineDFACollector;
 		
+		// Target Results
 		double* mPredictSpeedUp;
 		int mOptimalConfiguration;
 		double mOptimalPerformance;

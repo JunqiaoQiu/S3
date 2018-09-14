@@ -10,7 +10,7 @@
 namespace s3
 {
 	// Some default settings
-	const long TrainLength = 10000000;
+	const long DefaultTrainLength = 10000000;
 	const int DFAProfileSample = 120;
 	const int DFAProfileSamplePerInput = 12;
 	const int DefaultMeasurementRepeat = 5;

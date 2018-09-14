@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
+#include <cstring>
 
 #include "s3framework.h"
 #include "Resources.h"
@@ -31,7 +32,14 @@ namespace s3
 		TrainDFA():DFA() 
 		{
 			mReExecuteAction = doNothingReExecute;
+			mTrainLength = DefaultTrainLength;
 		}
+		TrainDFA(long trainLength):DFA() 
+		{
+			mReExecuteAction = doNothingReExecute;
+			mTrainLength = trainLength;
+		}
+
 		virtual ~TrainDFA() {}
 
 		virtual void run(const Table* table, const Input* input)
@@ -44,7 +52,7 @@ namespace s3
 			int length_ = input->getLength();
 
 			int state_ = rand() % nstate_;
-			long determineTrainLength = (TrainLength > length_)? length_ : TrainLength;
+			long determineTrainLength = (mTrainLength > length_)? length_ : mTrainLength;
 			long randstartpoint_ = rand() % (length_ - determineTrainLength + 1);
 
 			for (long i = randstartpoint_; i < randstartpoint_ + determineTrainLength; i++)
@@ -70,7 +78,7 @@ namespace s3
 			int state1_ = rand() % nstate_;
 			int state2_ = rand() % nstate_;
 
-			long determineTrainLength = (TrainLength > length_)? length_ : TrainLength;
+			long determineTrainLength = (mTrainLength > length_)? length_ : mTrainLength;
 			long randStartPoint = rand() % (length_ - determineTrainLength + 1);
 
 			for (long i = randStartPoint; i < randStartPoint + determineTrainLength; i++)
@@ -91,6 +99,7 @@ namespace s3
 
 	private:
 		actionReExecute mReExecuteAction;
+		long mTrainLength; 
 	};
 
 	struct  PassTrainDFA
@@ -106,6 +115,7 @@ namespace s3
 	ArchitecturePropertyCollector::ArchitecturePropertyCollector()
 	{
 		mThreads = 1;
+		mTrainingLength = DefaultTrainLength;
 		mTrainTime = 0;
 		mAlpha = new double [1];
 		mAlpha[0] = 1.00;
@@ -116,6 +126,19 @@ namespace s3
 	ArchitecturePropertyCollector::ArchitecturePropertyCollector(int threads)
 	{
 		mThreads = threads;
+		mTrainingLength = DefaultTrainLength;
+		mTrainTime = 0;
+		mAlpha = new double [threads];
+		mGama = 1.00;
+		for (int i =0 ; i < threads; i++)
+			mAlpha[i] = 1.00;
+		mAverageBaseTime = 0.00;
+	}
+
+	ArchitecturePropertyCollector::ArchitecturePropertyCollector(int threads, long trainingLength)
+	{
+		mThreads = threads;
+		mTrainingLength = trainingLength;
 		mTrainTime = 0;
 		mAlpha = new double [threads];
 		mGama = 1.00;
@@ -131,7 +154,7 @@ namespace s3
 
 	void ArchitecturePropertyCollector::executeTrain(const Table* table_, const Input* inputs_)
 	{
-		TrainDFA* objTrain = new TrainDFA();
+		TrainDFA* objTrain = new TrainDFA(mTrainingLength);
 
 		Timer T1;
 		srand(time(NULL));
@@ -144,7 +167,7 @@ namespace s3
 		else
 			mAverageBaseTime = (mAverageBaseTime * mTrainTime + baseTime) / (mTrainTime+1.0) ;
 
-		cout << "Base time is " << baseTime << endl;
+		// cout << "Base time is " << baseTime << endl;
 		//PTHREAD--------------------------------
 		int errorCode1, errorCode2;
 		long t;
@@ -185,7 +208,7 @@ namespace s3
 		    stopTime(&T1);
 		    double mulTime = elapsedTime(T1);
 
-		    cout << i << " " << mulTime << endl;
+		    // cout << i << " " << mulTime << endl;
 		    if (mTrainTime == 0)
 				mAlpha[i-1] = mulTime / baseTime;
 		    else
@@ -196,7 +219,7 @@ namespace s3
 		objTrainPointer->mObjDFA->doubleRun(table_, inputs_);
 		stopTime(&T1);
 		double doubleTime = elapsedTime(T1);
-		cout << doubleTime << " " << baseTime << endl;
+		// cout << doubleTime << " " << baseTime << endl;
 
 		if (mTrainTime == 0)
 			mGama = doubleTime / baseTime;
@@ -234,9 +257,9 @@ namespace s3
 
 		for (int i = 0; i < numInputs; i++)
 		{
-
 				const Input* inputs = Input::readFromFile(allInputFiles[i].c_str(), rule);
 				this->executeTrain(table, inputs);
+				delete inputs;
 		}
 	}
 
@@ -247,9 +270,41 @@ namespace s3
 			this->executeTrain(table, inputs);
 	}
 
+	void ArchitecturePropertyCollector::repeatExecuteTrain(const microspec::Table* table, const char* inputsLibFile, 
+			const microspec::MappingRule* rule, const int repeatTime)
+	{
+		// collect the testing input files from the Library file
+		ifstream inputLib;
+		inputLib.open(inputsLibFile);
+		vector<string> allInputFiles;
+		
+		while(inputLib)
+		{
+			string inputTemp;
+			getline(inputLib, inputTemp);
+			if(inputLib.fail())
+				break;
+			allInputFiles.push_back(inputTemp);
+		}
+		inputLib.close();
+		int numInputs = allInputFiles.size();
+
+		for (int i = 0; i < numInputs; i++)
+		{
+				const Input* inputs = Input::readFromFile(allInputFiles[i].c_str(), rule);
+				this->repeatExecuteTrain(table, inputs, repeatTime);
+				delete inputs;
+		}
+	}	
+
 	int ArchitecturePropertyCollector::getTrainTimes() const
 	{
 		return mTrainTime;
+	}
+
+	long ArchitecturePropertyCollector::getTrainingLength() const
+	{
+		return mTrainingLength;
 	}
 
 	int ArchitecturePropertyCollector::getNumThreads() const
@@ -280,7 +335,6 @@ namespace s3
 		return mAverageBaseTime;
 	}
 
-
 /* Implementation of class DFAPropertyCollector */	
 
 	DFAPropertyCollector::DFAPropertyCollector()
@@ -288,8 +342,9 @@ namespace s3
 		mSamples = 0;
 		mSamplePoolSize = DFAProfileSample; 
 		mSamplesPerInput = DFAProfileSamplePerInput;
-		mCorrectPrediction = 0;
-		mConvergenceLength = 0;
+		mCorrectPrediction = 0.0;
+		mConvergenceLength = 0.0;
+		mEffectiveConvergenceLength = 0.0;
 		mConvergenceLengthPool = new long [mSamplePoolSize];
 	}
 
@@ -300,6 +355,7 @@ namespace s3
 		mSamplesPerInput = samplePerTest;
 		mCorrectPrediction = 0;
 		mConvergenceLength = 0;
+		mEffectiveConvergenceLength = 0.0;
 		mConvergenceLengthPool = new long [mSamplePoolSize];		
 	}
 
@@ -332,7 +388,10 @@ namespace s3
 			if (mSamples < mSamplePoolSize)
 			{
 				const Input* inputs = Input::readFromFile(allInputFiles[i].c_str(), rule);
+				// cout << inputs->getLength() << endl;
 				this->executeProfilingOnOneInput(table, inputs);
+				cout << "Finish profiling on Input " << i+1 << " shown in the Lib" << endl;
+				delete inputs;
 			}
 		}
 	}
@@ -413,6 +472,8 @@ namespace s3
 						currentSampleLength[indexRecord] = length_- i + 1; 
 				}
 				indexRecord++;
+				if (indexRecord == mSamplesPerInput)
+					break;
 			}
 
 			int temp = tableList_[state_ * nsymbol_ + Inputs_[i]];
@@ -466,6 +527,23 @@ namespace s3
 		return mConvergenceLength;
 	}
 
+	double DFAPropertyCollector::getEffectiveAverageConvergenceLength()
+	{
+		long total = 0;
+		int effectNum = 0;
+		for (int i= 0; i < mSamples; i++)
+		{
+			if (mConvergenceLengthPool[i] > 0)
+			{
+				total += (mConvergenceLengthPool[i]);
+				effectNum++;
+			}
+		}
+		mEffectiveConvergenceLength = total * 1.0 /(double(effectNum));
+
+		return mEffectiveConvergenceLength;
+	}	
+
 	long* DFAPropertyCollector::getConvergencePool() const
 	{
 		return mConvergenceLengthPool;
@@ -476,7 +554,7 @@ namespace s3
 		mSamplesPerInput = sizeSet;
 	}
 
-/* Implementation of class S3RunTimeController 	
+/* Implementation of class S3RunTimeController 	*/
 
 	S3RunTimeController::S3RunTimeController()
 	{
@@ -502,17 +580,40 @@ namespace s3
 		mOptimalPerformance = 1.0; 		
 	}	
 
-	void S3RunTimeController::startOffileArchiProfile()
+	S3RunTimeController::S3RunTimeController(int threads, long testLength)
 	{
-		
+		mThreads = threads;
+		mTestLength = testLength;
+		mArchiProfileComplete = false;
+		mPropertyProfileComplete = false;
 
+		mPredictSpeedUp = new double [mThreads];
+		mOptimalConfiguration = 1;
+		mOptimalPerformance = 1.0; 		
+	}	
+
+	void S3RunTimeController::startOfflineProfile(const microspec::Table* table, 
+			const char* inputsLibFile, const microspec::MappingRule* rule)
+	{
+		this->startOfflineArchiProfile(table, inputsLibFile, rule);
+		this->startOfflineDFAProfile(table, inputsLibFile, rule);
+	}
+
+	void S3RunTimeController::startOfflineArchiProfile(const microspec::Table* table, 
+			const char* inputsLibFile, const microspec::MappingRule* rule)
+	{
+		if (mArchiProfileComplete == false)	
+			mOfflineArchiCollector = new ArchitecturePropertyCollector(mThreads);
+		mOfflineArchiCollector->executeTrain(table, inputsLibFile, rule);
 		mArchiProfileComplete = true;
 	}
 
-	void S3RunTimeController::startOfflineDFAProfile()
+	void S3RunTimeController::startOfflineDFAProfile(const microspec::Table* table, 
+			const char* inputsLibFile, const microspec::MappingRule* rule)
 	{
-
-
+		if (mPropertyProfileComplete == false)
+			mOfflineDFACollector = new DFAPropertyCollector();
+		mOfflineDFACollector->executeProfilingOnTestLibs(table, inputsLibFile, rule);
 		mPropertyProfileComplete = true;
 	}
 
@@ -521,7 +622,8 @@ namespace s3
 		char* modelTypeLow;
 		modelTypeLow = new char [strlen(modelType)];
 		for (int i = 0; i < strlen(modelType); ++i)
-	    	modelTypeLow[i] = tolower(modelType[i]);	
+	    	modelTypeLow[i] = tolower(modelType[i]);
+	    this->clearPreviousResults();	
 
 		if (mTestLength <= 0)	 
 		{
@@ -564,20 +666,30 @@ namespace s3
 		int i, j;
 		for (i=1; i<mThreads; i++)
 		{
-			double ChunkLength = mTestLength *1. 0 / (i+1);
+			double ChunkLength = mTestLength *1.0 / (i+1);
 			double SpecLength = ChunkLength;
 
 			long tempTotal = 0;
 			long* pool = mOfflineDFACollector->getConvergencePool();
 			int poolSize = mOfflineDFACollector->getCurrentSamples();
+			int CLSamples = 0;
 			for (j = 0; j< poolSize; j++)
 			{
-				if (pool[j] > ChunkLength)
-					tempTotal += ChunkLength;
-				else
-					tempTotal += pool[j];
+				if (pool[j] > 0)
+				{
+					if (pool[j] > ChunkLength)
+						tempTotal += ChunkLength;
+					else
+						tempTotal += pool[j];
+					CLSamples++;
+				}
 			}
-			SpecLength += (tempTotal * 1.0 / poolSize);
+			if (CLSamples != 0)
+				tempTotal = tempTotal * 1.0 / CLSamples;
+
+			tempTotal = tempTotal * i * mOfflineDFACollector->getPredictionAccuracy();
+
+			SpecLength += tempTotal;
 			mPredictSpeedUp[i] = mTestLength * 1.0 / SpecLength;
 			if (mPredictSpeedUp[i] > mOptimalPerformance)
 			{
@@ -590,22 +702,33 @@ namespace s3
 	void S3RunTimeController::ModelM1Plus()
 	{
 		int i, j;
+		double gama = mOfflineArchiCollector->getGama();
 		for (i=1; i<mThreads; i++)
 		{
-			double ChunkLength = mTestLength *1. 0 / (i+1);
-			double SpecLength = ChunkLength * mOfflineArchiCollector->getAlpha(i);
+			double ChunkLength = mTestLength *1.0 / (i+1);
+			double SpecLength = ChunkLength * mOfflineArchiCollector->getAlpha(i+1);
 
 			long tempTotal = 0;
 			long* pool = mOfflineDFACollector->getConvergencePool();
 			int poolSize = mOfflineDFACollector->getCurrentSamples();
+			int CLSamples = 0;
 			for (j = 0; j< poolSize; j++)
 			{
-				if (pool[j] > ChunkLength)
-					tempTotal += ChunkLength;
-				else
-					tempTotal += pool[j];
+				if (pool[j] > 0)
+				{
+					if (pool[j] > ChunkLength)
+						tempTotal += ChunkLength;
+					else
+						tempTotal += pool[j];
+					CLSamples++;
+				}
 			}
-			SpecLength += ((tempTotal * 1.0 / poolSize));
+			if (CLSamples != 0)
+				tempTotal = tempTotal * 1.0 / CLSamples;
+
+			tempTotal = tempTotal * i * mOfflineDFACollector->getPredictionAccuracy() * gama;
+
+			SpecLength += tempTotal;
 			mPredictSpeedUp[i] = mTestLength * 1.0 / SpecLength;
 			if (mPredictSpeedUp[i] > mOptimalPerformance)
 			{
@@ -618,17 +741,18 @@ namespace s3
 	void S3RunTimeController::ModelM2()
 	{
 		int i, j;
-		double averageCL = mOfflineDFACollector->getAverageConvergenceLength();
+		double averageCL = mOfflineDFACollector->getEffectiveAverageConvergenceLength();
 
 		for (i=1; i<mThreads; i++)
 		{
-			double ChunkLength = mTestLength *1. 0 / (i+1);
+			double ChunkLength = mTestLength *1.0 / (i+1);
 			double SpecLength = ChunkLength;
 
 			if (averageCL > ChunkLength)
-				SpecLength += ChunkLength;
+				SpecLength += (ChunkLength * i* mOfflineDFACollector->getPredictionAccuracy() * 1.0);
 			else
-				SpecLength += averageCL;
+				SpecLength += (averageCL * i * mOfflineDFACollector->getPredictionAccuracy() * 1.0);
+
 			mPredictSpeedUp[i] = mTestLength * 1.0 / SpecLength;
 
 			if (mPredictSpeedUp[i] > mOptimalPerformance)
@@ -641,7 +765,28 @@ namespace s3
 
 	void S3RunTimeController::ModelM2Plus()
 	{
-		;
+		int i, j;
+		double averageCL = mOfflineDFACollector->getEffectiveAverageConvergenceLength();
+		double gama = mOfflineArchiCollector->getGama();
+
+		for (i=1; i<mThreads; i++)
+		{
+			double ChunkLength = mTestLength *1.0 / (i+1);
+			double SpecLength = ChunkLength * mOfflineArchiCollector->getAlpha(i+1); 
+
+			if (averageCL > ChunkLength)
+				SpecLength += (ChunkLength * i* mOfflineDFACollector->getPredictionAccuracy() * 1.0 * gama);
+			else
+				SpecLength += (averageCL * i * mOfflineDFACollector->getPredictionAccuracy() * 1.0 * gama);
+
+			mPredictSpeedUp[i] = mTestLength * 1.0 / SpecLength;
+
+			if (mPredictSpeedUp[i] > mOptimalPerformance)
+			{
+				mOptimalPerformance = mPredictSpeedUp[i];
+				mOptimalConfiguration = i+1;
+			}
+		}
 	}
 
 	void S3RunTimeController::setTestLength(long length)
@@ -668,5 +813,14 @@ namespace s3
 	{
 		return mPredictSpeedUp;
 	}
-*/
+
+	void S3RunTimeController::clearPreviousResults()
+	{
+		mPredictSpeedUp[0] = 1.00;
+		for (int i = 1; i < mThreads; i++)
+			mPredictSpeedUp[i] = 0.00;
+		mOptimalConfiguration = 1;
+		mOptimalPerformance = 1.00;
+	}
+
 }	// end of namespace s3
