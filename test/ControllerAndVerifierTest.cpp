@@ -35,9 +35,20 @@ int main(int argc, char* argv[])
 	double datatime =  elapsedTime(T1);	
 	cout << "Data construct time : "<< datatime << " s"<< endl << endl;
 
-	S3Verifier* objVerifier = S3Verifier::constructS3Verifier(numThreads);
-	objVerifier->startVerification(table_, InputLibFile, rules_);
-	objVerifier->printSpeedup2File("Output.out");
+	long testLength = 300000000;
+	S3RunTimeController* objController = new S3RunTimeController(numThreads, testLength);
+
+	objController->startOfflineProfile(table_, InputLibFile, rules_);
+	objController->startModelConstruction("M1+");
+
+	cout << "Optimal Configuration is " << objController->getOptConfiguration() << endl;
+	cout << "Optimal Performance is " << objController->getOptPerformance() << endl;
+	cout << "Speedups are " << endl;
+	for (int i = 0; i < numThreads; i++)
+		cout << (objController->getSpeedupArrays())[i] << " ";
+	cout << endl;
+
+	objController->printSpeedups("outPutAnalysis.out");
 
 	return 0;
 }

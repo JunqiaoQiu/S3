@@ -22,6 +22,7 @@ namespace s3
 	public:
 		S3Verifier();
 		S3Verifier(int numThreads);
+		S3Verifier(int numThreads, int numRepeat);
 		~S3Verifier();
 		
 		// Return a S3Verifier pointer with proding the max # cores could be used

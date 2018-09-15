@@ -823,4 +823,19 @@ namespace s3
 		mOptimalPerformance = 1.00;
 	}
 
+	void S3RunTimeController::printSpeedups() const
+	{
+		for (int i = 0; i < mThreads; i++)
+			cout << i+1 << " " << mPredictSpeedUp[i] << endl;
+	}
+	
+	void S3RunTimeController::printSpeedups(char* outPutFile) const
+	{
+		ofstream out;
+		out.open(outPutFile);
+		for (int i = 0; i < mThreads; i++)
+			out << i+1 << " " << mPredictSpeedUp[i] << endl;		
+		out.close();
+	}	
+
 }	// end of namespace s3

@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 	double datatime =  elapsedTime(T1);	
 	cout << "Data construct time : "<< datatime << " s"<< endl << endl;
 
-	S3Verifier* objVerifier = S3Verifier::constructS3Verifier(numThreads);
+	S3Verifier* objVerifier = new S3Verifier(numThreads, 3); //S3Verifier::constructS3Verifier(numThreads);
 	objVerifier->startVerification(table_, InputLibFile, rules_);
 	objVerifier->printSpeedup2File("Output.out");
 

@@ -46,6 +46,16 @@ namespace s3
 		mRepeatTime = DefaultMeasurementRepeat;
 	}
 
+	S3Verifier::S3Verifier(int numThreads, int numRepeat)
+	{
+		mInputs = 0;
+		mThreads = numThreads;
+		mSpeedup = new double [mThreads];
+		for (int i = 0; i < mThreads; i++)
+			mSpeedup[i] = 1.00;
+		mRepeatTime = numRepeat;
+	}
+
 	S3Verifier::~S3Verifier()
 	{
 		delete []mSpeedup;
@@ -107,6 +117,7 @@ namespace s3
 					detailTime[i][j] += timeOnCurrentInput[k][j];
 				detailTime[i][j] = detailTime[i][j] / (mRepeatTime*1.0);
 			}
+			delete inputs;
 		}
 
 		for (i = 0; i < mThreads; i++)

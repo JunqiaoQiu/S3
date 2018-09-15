@@ -138,6 +138,9 @@ namespace s3
 		const double getOptPerformance() const;
 		double* getSpeedupArrays() const; 
 
+		void printSpeedups() const;
+		void printSpeedups(char* outPutFile) const;
+
 	protected:
 		void clearPreviousResults();
 
