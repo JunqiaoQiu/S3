@@ -2,17 +2,17 @@
 
 **S3**, a scalability-sensitive speculation framework for FSM parallelization.
 
-For any given FSM, **S3** can automatically characterize its properties and analyze its scalability, hence guide speculative paralleilization towards the optimal performance more efficient use of computing resources. More details can be found in our paper.
+For any given FSM, **S3** can automatically characterize its properties and analyze its scalability, hence guide speculative paralleilization towards the optimal performance more efficient use of computing resources. More details can be found in our paper [1].
 
 ## Features
-- **S3** is implemented based on the OptSpec library and our previous MicroSpec project. It is implemented in C++ and leverages Pthread for multi-threading. 
+- **S3** is implemented in C++ and leverages Pthread for multi-threading, and uses  our previous MicroSpec Library. 
 
 - There are 3 major components in **S3**, including: 
 	1. An offline architecture property collector;
-	2. An FSM property collector for profiling state convergence properties;
+	2. An offline FSM property collector for profiling state convergence properties;
 	3. a runtime controller that implements the scalabiltiy models;
 
-- To ensure the correctness, a verifier is provided, to measure and collect the average performance of given FSM on different configurations.
+- To ensure the correctness, a verifier is provided, to measure and collect the average performance of the given FSM on different configurations.
 
 ## Installation
 
@@ -24,9 +24,26 @@ git clone https://github.com/JunqiaoQiu/S3Repo.git
 ```
 ### Install and Build
 
+The requirements for building **S3** include: `cmake2.8+` and `gcc4.9+`. To build it:
+
+```sh
+mkdir build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+```
+
 ## Usage
 
-Currently **S3** can be used as a library, which can feed the analysis results into the speculative FSM parallelization setting at runtime through the provide APIs. 
+Currently **S3** can be used as a library, which can feed the analysis results into the speculative FSM parallelization setting at runtime through the provided APIs. Here an simple example shows how to use **S3**. 
 
-At the same time, we also construct a linux command-line tool, which will provide the scalability analysis of a given FSM, and verify the correctness by comparing with the ground truth. 
+```cpp
+S3RunTimeController* objController = new S3RunTimeController(numThreads, testLength);
+objController->startOfflineProfile(tableObject, InputLibFile, mappingRule);
+objController->startModelConstruction("M1+");
+printf("The optimal configuration %d\n", objController->getOptConfiguration());
+printf("The optimal configuration %d\n", objController->getOptPerformance());
 
+```
+
+
+## Reference

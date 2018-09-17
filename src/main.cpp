@@ -1,8 +1,10 @@
 
 #include <thread>
+#include <string>
 #include "cxxopts.hpp"
 #include "Resources.h"
 #include "s3framework.h"
+#include "s3verifier.h"
 
 using namespace std;
 using namespace microspec;
@@ -34,7 +36,6 @@ static void init_options(cxxopts::Options& options, arguments& args)
     options.parse_positional({"table", "input", "output"});
 }
 
-
 int main(int argc, char **argv)
 {
     unsigned int core_num = std::thread::hardware_concurrency();
@@ -64,7 +65,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    
+    // const char* tableFile = args.table.c_str();
+    // Table* table_ = Table::readFromFile(TableFile, AcceptFile, start, rules_);
+    // S3RunTimeController* objController = new S3RunTimeController(numThreads, testLength);
 
     return 0;
 }

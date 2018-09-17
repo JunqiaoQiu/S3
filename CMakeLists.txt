@@ -7,13 +7,13 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 include_directories(src third-party)
-include_directories(MicroSpecRepo/include)
+include_directories(MicroSpec-0.2.1/include)
 
 file(GLOB SRC
 	${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
 )
 
-add_subdirectory(MicroSpecRepo)
+add_subdirectory(MicroSpec-0.2.1)
 
 file(GLOB HEADER ${CMAKE_CURRENT_SOURCE_DIR}/src/s3framework.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/src/s3verifier.cpp)
