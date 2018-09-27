@@ -7,3 +7,5 @@ build/
 *.out
 .vscode/
 
+# ignore MicroSpec
+MicroSpec/

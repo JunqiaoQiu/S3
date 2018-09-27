@@ -32,6 +32,8 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ```
 
+Since **S3** needs the supports from another project **MicroSpec**, we have applied automatically git clone for this external repo, but if you want to manage it by yourself, you can download it use your own way before build **S3**.
+
 ## Usage
 
 Currently **S3** can be used as a library, which can feed the analysis results into the speculative FSM parallelization setting at runtime through the provided APIs. Here an simple example shows how to use **S3**. 
@@ -45,5 +47,6 @@ printf("The optimal configuration %d\n", objController->getOptPerformance());
 
 ```
 
-
 ## Reference
+[1] Qiu J, Zhao Z, Wu B, Vishnu A, Song SL. Enabling scalability-sensitive speculative parallelization for fsm computations. InProceedings of the International Conference on Supercomputing 2017 Jun 14 (p. 2). ACM.
+
