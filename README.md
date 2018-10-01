@@ -20,7 +20,7 @@ For any given FSM, **S3** can automatically characterize its properties and anal
 You can clone this repository by using git:
 
 ```sh
-git clone https://github.com/JunqiaoQiu/S3Repo.git
+git clone https://github.com/JunqiaoQiu/S3.git
 ```
 ### Install and Build
 
