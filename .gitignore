@@ -1,0 +1,11 @@
+# Here we put some dirs and files to ignore them in git repository.
+
+# ignore build dir
+build/
+
+# ignore binaries
+*.out
+.vscode/
+
+# ignore MicroSpec
+MicroSpec/
