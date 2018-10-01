@@ -13,3 +13,8 @@ target_link_libraries(VerifierTest S3LIB MicroSpec)
 # Test 4
 add_executable (ControllerAndVerifierTest ControllerAndVerifierTest.cpp)
 target_link_libraries(ControllerAndVerifierTest S3LIB MicroSpec)
+
+# Test 5
+add_executable (VerifierRun VerifierRun.cpp)
+target_link_libraries(VerifierRun S3LIB MicroSpec)
+

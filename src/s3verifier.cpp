@@ -34,6 +34,8 @@ namespace s3
 		mSpeedup = new double [1];
 		mSpeedup[0] = 1.00; 
 		mRepeatTime = DefaultMeasurementRepeat;
+		mSequentialTime = 0.0;
+		mActionType = "DoNothing";
 	}
 
 	S3Verifier::S3Verifier(int numThreads)
@@ -44,6 +46,8 @@ namespace s3
 		for (int i = 0; i < mThreads; i++)
 			mSpeedup[i] = 1.00;
 		mRepeatTime = DefaultMeasurementRepeat;
+		mSequentialTime = 0.0;
+		mActionType = "DoNothing";
 	}
 
 	S3Verifier::S3Verifier(int numThreads, int numRepeat)
@@ -54,11 +58,19 @@ namespace s3
 		for (int i = 0; i < mThreads; i++)
 			mSpeedup[i] = 1.00;
 		mRepeatTime = numRepeat;
+		mSequentialTime = 0.0;
+		mActionType = "DoNothing";
 	}
 
 	S3Verifier::~S3Verifier()
 	{
 		delete []mSpeedup;
+		mActionType = NULL;
+	}
+
+	void S3Verifier::setAction(char* actionType)
+	{
+		mActionType = actionType;
 	}
 
 	S3Verifier* S3Verifier::constructS3Verifier(int numThreads)
@@ -130,6 +142,7 @@ namespace s3
 
 		for (i = 1; i < mThreads; i++)
 			mSpeedup[i] = mSpeedup[0] / mSpeedup[i];
+		mSequentialTime = mSpeedup[0];
 		mSpeedup[0] = 1.00;
 	}
 
@@ -191,18 +204,22 @@ namespace s3
 
 		Timer T1;
 		DFA* objSeq = new SeqDFA();
+		objSeq->setAction(mActionType);
 		startTime(&T1);
 		objSeq->run(table, inputs);
 		stopTime(&T1);
 		currentTime[0] = elapsedTime(T1);
+		delete objSeq;
 
 		for (int i = 1; i < mThreads; i++)
 		{
 			DFA* objSpec = new SpecDFA_Pthread(i+1);
+			objSpec->setAction(mActionType);
 			startTime(&T1);
 			objSpec->run(table, inputs);
 			stopTime(&T1);
 			currentTime[i] = elapsedTime(T1);
+			delete objSpec;
 		}
 		return currentTime;
 	}
@@ -239,6 +256,11 @@ namespace s3
 		for (int i = 0 ; i < mThreads; i++)
 			out << i+1 << " " << mSpeedup[i] << endl;
 		out.close();
+	}
+
+	double S3Verifier::getSequentialTime() const
+	{
+		return mSequentialTime;
 	}
 
 }	// end of namespace s3

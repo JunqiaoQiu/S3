@@ -32,7 +32,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ```
 
-Since **S3** needs the supports from another project **MicroSpec**, we have applied automatically git clone for this external repo, but if you want to manage it by yourself, you can download it use your own way before build **S3**.
+Since **S3** needs supports from another project **MicroSpec**, we have applied automatically `git clone` for this external repo, but if you want to manage it by yourself, you can download it using your own way before build **S3**.
 
 ## Usage
 
@@ -47,7 +47,7 @@ printf("The optimal configuration %d\n", objController->getOptPerformance());
 
 ```
 
-At the same time, we also provide a command line tool to provide FSM benchmark scalability. Fore more details, you can check this tool with the --help option. 
+At the same time, a command line tool is also provided for analyzing FSM benchmark scalability. Fore more details, you can check this tool **_S3_** with the --help option. 
 
 ## Reference
 [1] Qiu J, Zhao Z, Wu B, Vishnu A, Song SL. Enabling scalability-sensitive speculative parallelization for fsm computations. InProceedings of the International Conference on Supercomputing 2017 Jun 14 (p. 2). ACM.

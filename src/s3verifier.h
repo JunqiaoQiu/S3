@@ -24,6 +24,8 @@ namespace s3
 		S3Verifier(int numThreads);
 		S3Verifier(int numThreads, int numRepeat);
 		~S3Verifier();
+
+		void setAction(char* actionType);
 		
 		// Return a S3Verifier pointer with proding the max # cores could be used
 		static S3Verifier* constructS3Verifier(int numThreads);
@@ -52,6 +54,7 @@ namespace s3
 		double* getSpeedups() const;
 		void setRepeatTime(int repeatTime);
 		int getRepeatTime() const;
+		double	getSequentialTime() const;
 		void printSpeedup2File(const char* outputFile) const;
 
 	private:
@@ -59,6 +62,8 @@ namespace s3
 		int mThreads;
 		int mRepeatTime;
 		double* mSpeedup;
+		double mSequentialTime;
+		char* mActionType;
 	};
 
 }	// end of namespace s3

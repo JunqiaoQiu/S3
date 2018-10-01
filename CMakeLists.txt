@@ -17,6 +17,20 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 
 include_directories(src third-party)
 include_directories(MicroSpec/include)
+# Setting with considering allowing actions for dfa computation
+set(ALLOW_ACTION ON)
+if(ALLOW_ACTION)
+	message("DFA run with action is allowed")
+else()
+	message("DFA run without any action")
+endif()
+
+set(AVX2_SUPPORT ON)
+if(AVX2_SUPPORT)
+	message("Allow AVX2")
+else()
+	message("Not Allow AVX2")
+endif()
 
 file(GLOB SRC
 	${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
